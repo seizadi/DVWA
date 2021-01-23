@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-frontend
+  labels:
+    app.kubernetes.io/name: nginx-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nginx-frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nginx-frontend
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: nginx-frontend
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: bitnami/nginx:1.19.6-debian-10-r21
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+          - name: nginx-config
+            mountPath: "/opt/bitnami/nginx/conf/server_blocks/"
+            readOnly: True
+          envFrom:
+            - configMapRef:
+                name: {{ .Chart.Name }}
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-frontend
+  labels:
+    app.kubernetes.io/name: nginx-frontend
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: nginx-frontend
+

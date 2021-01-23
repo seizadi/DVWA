@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-configmap
+data:
+  config.conf: |+
+    server {
+        listen 0.0.0.0:8081;
+        access_log /opt/bitnami/nginx/logs/yourapp_access.log;
+        error_log /opt/bitnami/nginx/logs/yourapp_error.log;
+
+        location / {
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header HOST $http_host;
+            proxy_set_header X-NginX-Proxy true;
+
+            proxy_pass http://dvwa-chart:80;
+            proxy_redirect off;
+        }
+    }
+
